@@ -1,7 +1,10 @@
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
 from recipes.models import Ingredient, Recipe, RecipeIngredient, RecipeStep, Tag
+
+User = get_user_model()
 
 
 def make_recipe(**kwargs):
@@ -59,6 +62,8 @@ class RecipeDetailViewTest(TestCase):
 class RecipeCreateViewTest(TestCase):
     def setUp(self):
         self.url = reverse('recipes:create')
+        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.client.force_login(self.user)
 
     def test_get_form(self):
         response = self.client.get(self.url)
@@ -92,6 +97,8 @@ class RecipeCreateViewTest(TestCase):
 
 class RecipeUpdateViewTest(TestCase):
     def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.client.force_login(self.user)
         self.recipe = make_recipe(title='Old Title')
         self.url = reverse('recipes:edit', kwargs={'slug': self.recipe.slug})
 
@@ -123,6 +130,8 @@ class RecipeUpdateViewTest(TestCase):
 
 class RecipeDeleteViewTest(TestCase):
     def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.client.force_login(self.user)
         self.recipe = make_recipe(title='To Delete')
         self.url = reverse('recipes:delete', kwargs={'slug': self.recipe.slug})
 

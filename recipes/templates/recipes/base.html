@@ -62,6 +62,12 @@
     <a href="{% url 'recipes:list' %}">Recipes</a>
     <a href="{% url 'recipes:create' %}">Add Recipe</a>
     <a href="/admin/" style="margin-left:auto">Admin</a>
+    {% if user.is_authenticated %}
+      <span style="color:#adb5bd">{{ user.email }}</span>
+      <a href="{% url 'account_logout' %}">Logout</a>
+    {% else %}
+      <a href="{% url 'account_login' %}">Login</a>
+    {% endif %}
   </nav>
   <div class="container">
     {% if messages %}

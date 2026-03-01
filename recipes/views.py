@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.urls import reverse_lazy
 from django.views.generic import (
@@ -52,7 +53,7 @@ class RecipeDetailView(DetailView):
         )
 
 
-class RecipeCreateView(CreateView):
+class RecipeCreateView(LoginRequiredMixin, CreateView):
     model = Recipe
     form_class = RecipeForm
     template_name = 'recipes/recipe_form.html'
@@ -85,7 +86,7 @@ class RecipeCreateView(CreateView):
         return self.object.get_absolute_url()
 
 
-class RecipeUpdateView(UpdateView):
+class RecipeUpdateView(LoginRequiredMixin, UpdateView):
     model = Recipe
     form_class = RecipeForm
     template_name = 'recipes/recipe_form.html'
@@ -122,7 +123,7 @@ class RecipeUpdateView(UpdateView):
         return self.object.get_absolute_url()
 
 
-class RecipeDeleteView(DeleteView):
+class RecipeDeleteView(LoginRequiredMixin, DeleteView):
     model = Recipe
     template_name = 'recipes/recipe_confirm_delete.html'
     context_object_name = 'recipe'
