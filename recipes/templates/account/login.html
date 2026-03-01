@@ -1,0 +1,49 @@
+{% extends "recipes/base.html" %}
+{% load socialaccount %}
+
+{% block title %}Sign In{% endblock %}
+
+{% block content %}
+<div style="max-width:400px;margin:2rem auto">
+  <h1>Sign In</h1>
+
+  <div class="card" style="margin-top:1rem">
+    <form method="post" action="{% url 'account_login' %}">
+      {% csrf_token %}
+      {% for field in form %}
+        <div class="form-group">
+          {{ field.label_tag }}
+          {{ field }}
+          {% if field.errors %}
+            <ul style="color:#dc3545;font-size:0.875rem;list-style:none;margin-top:0.25rem">
+              {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% endfor %}
+      {% if form.non_field_errors %}
+        <ul style="color:#dc3545;font-size:0.875rem;list-style:none;margin-bottom:0.75rem">
+          {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+      <button type="submit" class="btn btn-primary" style="width:100%">Sign In</button>
+    </form>
+  </div>
+
+  {% get_providers as socialaccount_providers %}
+  {% if socialaccount_providers %}
+    <div class="card" style="margin-top:1rem;text-align:center">
+      <p style="margin-bottom:0.75rem;color:#6c757d;font-size:0.9rem">or continue with</p>
+      {% for provider in socialaccount_providers %}
+        <a href="{% provider_login_url provider.id %}" class="btn btn-secondary" style="width:100%">
+          Sign in with {{ provider.name }}
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <p style="margin-top:1rem;text-align:center;font-size:0.9rem">
+    Don't have an account? <a href="{% url 'account_signup' %}">Sign up</a>
+  </p>
+</div>
+{% endblock %}

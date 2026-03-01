@@ -1,0 +1,17 @@
+{% extends "recipes/base.html" %}
+
+{% block title %}Sign Out{% endblock %}
+
+{% block content %}
+<div style="max-width:400px;margin:2rem auto;text-align:center">
+  <h1>Sign Out</h1>
+  <div class="card" style="margin-top:1rem">
+    <p style="margin-bottom:1rem">Are you sure you want to sign out?</p>
+    <form method="post" action="{% url 'account_logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Sign Out</button>
+      <a href="{% url 'recipes:list' %}" class="btn btn-secondary" style="margin-left:0.5rem">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}
