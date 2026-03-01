@@ -143,3 +143,26 @@ class RecipeDeleteViewTest(TestCase):
     def test_post_deletes_recipe(self):
         self.client.post(self.url)
         self.assertFalse(Recipe.objects.filter(pk=self.recipe.pk).exists())
+
+
+class AuthPageStylingTest(TestCase):
+    """Verify that allauth auth pages use our custom base.html (not allauth's defaults)."""
+
+    NAV_BRAND = 'Recipe Manager'  # present in base.html nav, absent from allauth defaults
+
+    def test_login_page_uses_base_template(self):
+        response = self.client.get(reverse('account_login'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.NAV_BRAND)
+
+    def test_signup_page_uses_base_template(self):
+        response = self.client.get(reverse('account_signup'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.NAV_BRAND)
+
+    def test_logout_page_uses_base_template(self):
+        user = User.objects.create_user(username='testuser', password='pass')
+        self.client.force_login(user)
+        response = self.client.get(reverse('account_logout'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.NAV_BRAND)
