@@ -1,0 +1,72 @@
+{% extends "recipes/base.html" %}
+
+{% block title %}{{ recipe.title }}{% endblock %}
+
+{% block content %}
+<h1>{{ recipe.title }}</h1>
+
+<div class="meta" style="margin-bottom:1rem">
+  <span class="badge badge-{{ recipe.difficulty }}">{{ recipe.get_difficulty_display }}</span>
+  &nbsp;Prep: {{ recipe.prep_time }} min &nbsp;&bull;&nbsp;
+  Cook: {{ recipe.cook_time }} min &nbsp;&bull;&nbsp;
+  Total: {{ recipe.total_time }} min &nbsp;&bull;&nbsp;
+  Serves {{ recipe.servings }}
+</div>
+
+{% if recipe.tags.all %}
+  <div style="margin-bottom:1rem">
+    {% for tag in recipe.tags.all %}
+      <a href="{% url 'recipes:list' %}?tag={{ tag.slug }}" class="tag">{{ tag.name }}</a>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if recipe.image %}
+  <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}" style="max-width:100%;max-height:400px;object-fit:cover;border-radius:6px;margin-bottom:1rem">
+{% endif %}
+
+{% if recipe.description %}
+  <div class="card">{{ recipe.description|linebreaksbr }}</div>
+{% endif %}
+
+{% if recipe.recipe_ingredients.all %}
+  <h2 style="margin-top:1.5rem">Ingredients</h2>
+  <div class="card">
+    <table>
+      <thead>
+        <tr><th>Amount</th><th>Ingredient</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        {% for ri in recipe.recipe_ingredients.all %}
+          <tr>
+            <td>{{ ri.quantity }} {% if ri.unit %}{{ ri.unit }}{% endif %}</td>
+            <td>{{ ri.ingredient.name }}</td>
+            <td>{{ ri.notes }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+
+{% if recipe.steps.all %}
+  <h2 style="margin-top:1.5rem">Steps</h2>
+  {% for step in recipe.steps.all %}
+    <div class="step">
+      <div class="step-num">{{ step.step_number }}</div>
+      <div>
+        <p>{{ step.instruction|linebreaksbr }}</p>
+        {% if step.image %}
+          <img src="{{ step.image.url }}" alt="Step {{ step.step_number }}" style="max-width:400px;border-radius:4px;margin-top:0.5rem">
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<div class="actions" style="margin-top:2rem;padding-top:1rem;border-top:1px solid #dee2e6">
+  <a href="{% url 'recipes:edit' recipe.slug %}" class="btn btn-primary">Edit</a>
+  <a href="{% url 'recipes:delete' recipe.slug %}" class="btn btn-danger">Delete</a>
+  <a href="{% url 'recipes:list' %}" class="btn btn-secondary">Back to list</a>
+</div>
+{% endblock %}

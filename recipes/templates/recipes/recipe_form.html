@@ -1,0 +1,276 @@
+{% extends "recipes/base.html" %}
+
+{% block title %}{% if object %}Edit {{ object.title }}{% else %}New Recipe{% endif %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .sortable-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #fff;
+    transition: box-shadow 0.15s, opacity 0.15s;
+  }
+  .sortable-row.dragging {
+    opacity: 0.4;
+  }
+  .sortable-row.drag-over {
+    box-shadow: 0 0 0 2px #0d6efd;
+  }
+  .drag-handle {
+    cursor: grab;
+    color: #adb5bd;
+    font-size: 1.3rem;
+    line-height: 1;
+    padding: 0.35rem 0.25rem 0;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  .drag-handle:active { cursor: grabbing; }
+  .drag-handle[draggable="true"]:hover { color: #495057; }
+  .row-fields { flex: 1; min-width: 0; }
+  .row-remove { flex-shrink: 0; padding-top: 0.35rem; }
+  .row-remove label { display: flex; align-items: center; gap: 0.25rem; cursor: pointer; color: #dc3545; font-size: 0.85rem; }
+  .sortable-row.marked-delete { opacity: 0.45; background: #fff5f5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>{% if object %}Edit Recipe{% else %}New Recipe{% endif %}</h1>
+
+<form method="post" enctype="multipart/form-data" id="recipe-form">
+  {% csrf_token %}
+
+  <div class="card">
+    <h2>Basic Info</h2>
+    {% for field in form %}
+      <div class="form-group">
+        {{ field.label_tag }}
+        {{ field }}
+        {% if field.help_text %}
+          <small style="color:#6c757d;font-size:0.8rem">{{ field.help_text }}</small>
+        {% endif %}
+        {% if field.errors %}
+          <ul style="color:#dc3545;font-size:0.875rem;list-style:none;margin-top:0.25rem">
+            {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── Ingredients ─────────────────────────────────────── -->
+  <div class="card" style="margin-top:1rem">
+    <h2>Ingredients</h2>
+    {{ ingredient_formset.management_form }}
+    <div id="ingredient-rows">
+      {% for ing_form in ingredient_formset %}
+        <div class="sortable-row">
+          <span class="drag-handle" draggable="true" title="Drag to reorder">⠿</span>
+          <div class="row-fields">
+            {{ ing_form.order.as_hidden }}
+            {{ ing_form.id }}
+            <div class="inline-grid">
+              <div class="form-group">
+                <label>Ingredient</label>
+                {{ ing_form.ingredient_name }}
+              </div>
+              <div class="form-group">
+                <label>Quantity</label>
+                {{ ing_form.quantity }}
+              </div>
+              <div class="form-group">
+                <label>Unit</label>
+                {{ ing_form.unit }}
+              </div>
+              <div class="form-group">
+                <label>Notes</label>
+                {{ ing_form.notes }}
+              </div>
+            </div>
+          </div>
+          <div class="row-remove">
+            <label>{{ ing_form.DELETE }} Remove</label>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <button type="button" class="btn btn-secondary" style="margin-top:0.5rem"
+            onclick="addRow('ingredient-rows', 'ingredient-empty-form', 'id_recipe_ingredients-TOTAL_FORMS')">
+      + Add Ingredient
+    </button>
+  </div>
+
+  <!-- ── Steps ──────────────────────────────────────────── -->
+  <div class="card" style="margin-top:1rem">
+    <h2>Steps</h2>
+    {{ step_formset.management_form }}
+    <div id="step-rows">
+      {% for step_form in step_formset %}
+        <div class="sortable-row">
+          <span class="drag-handle" draggable="true" title="Drag to reorder">⠿</span>
+          <div class="row-fields">
+            {{ step_form.step_number.as_hidden }}
+            {{ step_form.id }}
+            <div class="form-group">
+              <label>Instruction</label>
+              {{ step_form.instruction }}
+            </div>
+            <div class="form-group" style="margin-top:0.5rem">
+              <label>Step Image (optional)</label>
+              {{ step_form.image }}
+            </div>
+          </div>
+          <div class="row-remove">
+            <label>{{ step_form.DELETE }} Remove</label>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <button type="button" class="btn btn-secondary" style="margin-top:0.5rem"
+            onclick="addRow('step-rows', 'step-empty-form', 'id_steps-TOTAL_FORMS')">
+      + Add Step
+    </button>
+  </div>
+
+  <div class="actions" style="margin-top:1rem">
+    <button type="submit" class="btn btn-primary">Save Recipe</button>
+    {% if object %}
+      <a href="{{ object.get_absolute_url }}" class="btn btn-secondary">Cancel</a>
+    {% else %}
+      <a href="{% url 'recipes:list' %}" class="btn btn-secondary">Cancel</a>
+    {% endif %}
+  </div>
+</form>
+
+<!-- ── Empty-form templates (hidden, used by JS) ──────── -->
+<template id="ingredient-empty-form">
+  <div class="sortable-row">
+    <span class="drag-handle" draggable="true" title="Drag to reorder">⠿</span>
+    <div class="row-fields">
+      {{ ingredient_formset.empty_form.order.as_hidden }}
+      {{ ingredient_formset.empty_form.id }}
+      <div class="inline-grid">
+        <div class="form-group">
+          <label>Ingredient</label>
+          {{ ingredient_formset.empty_form.ingredient_name }}
+        </div>
+        <div class="form-group">
+          <label>Quantity</label>
+          {{ ingredient_formset.empty_form.quantity }}
+        </div>
+        <div class="form-group">
+          <label>Unit</label>
+          {{ ingredient_formset.empty_form.unit }}
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          {{ ingredient_formset.empty_form.notes }}
+        </div>
+      </div>
+    </div>
+    <div class="row-remove">
+      <label>{{ ingredient_formset.empty_form.DELETE }} Remove</label>
+    </div>
+  </div>
+</template>
+
+<template id="step-empty-form">
+  <div class="sortable-row">
+    <span class="drag-handle" draggable="true" title="Drag to reorder">⠿</span>
+    <div class="row-fields">
+      {{ step_formset.empty_form.step_number.as_hidden }}
+      {{ step_formset.empty_form.id }}
+      <div class="form-group">
+        <label>Instruction</label>
+        {{ step_formset.empty_form.instruction }}
+      </div>
+      <div class="form-group" style="margin-top:0.5rem">
+        <label>Step Image (optional)</label>
+        {{ step_formset.empty_form.image }}
+      </div>
+    </div>
+    <div class="row-remove">
+      <label>{{ step_formset.empty_form.DELETE }} Remove</label>
+    </div>
+  </div>
+</template>
+
+<script>
+// ── Drag-and-drop ────────────────────────────────────────
+let draggedRow = null;
+
+function initSortable(containerId) {
+  const container = document.getElementById(containerId);
+
+  container.addEventListener('dragstart', e => {
+    if (!e.target.classList.contains('drag-handle')) return;
+    draggedRow = e.target.closest('.sortable-row');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', ''); // required for Firefox
+    requestAnimationFrame(() => draggedRow && draggedRow.classList.add('dragging'));
+  });
+
+  container.addEventListener('dragover', e => {
+    e.preventDefault();
+    if (!draggedRow) return;
+    const target = e.target.closest('.sortable-row');
+    if (!target || target === draggedRow || target.parentNode !== container) return;
+    const rect = target.getBoundingClientRect();
+    if (e.clientY < rect.top + rect.height / 2) target.before(draggedRow);
+    else target.after(draggedRow);
+  });
+
+  container.addEventListener('dragend', () => {
+    if (draggedRow) draggedRow.classList.remove('dragging');
+    draggedRow = null;
+    updateAllOrders();
+  });
+}
+
+initSortable('ingredient-rows');
+initSortable('step-rows');
+
+// ── Update hidden order / step_number fields ─────────────
+function updateAllOrders() {
+  document.querySelectorAll('#ingredient-rows .sortable-row').forEach((row, i) => {
+    const input = row.querySelector('input[name$="-order"]');
+    if (input) input.value = i;
+  });
+  document.querySelectorAll('#step-rows .sortable-row').forEach((row, i) => {
+    const input = row.querySelector('input[name$="-step_number"]');
+    if (input) input.value = i + 1;
+  });
+}
+
+// Run before submit to lock in current visual order
+document.getElementById('recipe-form').addEventListener('submit', updateAllOrders);
+
+// ── Dynamically add new rows ─────────────────────────────
+function addRow(containerId, templateId, totalFormsId) {
+  const container = document.getElementById(containerId);
+  const tmpl = document.getElementById(templateId);
+  const totalForms = document.getElementById(totalFormsId);
+  const idx = parseInt(totalForms.value);
+
+  const html = tmpl.innerHTML.replace(/__prefix__/g, idx);
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = html.trim();
+  container.appendChild(wrapper.firstElementChild);
+  totalForms.value = idx + 1;
+
+  updateAllOrders();
+}
+
+// ── Dim rows marked for removal ──────────────────────────
+document.addEventListener('change', e => {
+  if (e.target.type === 'checkbox' && e.target.name && e.target.name.endsWith('-DELETE')) {
+    e.target.closest('.sortable-row').classList.toggle('marked-delete', e.target.checked);
+  }
+});
+</script>
+{% endblock %}
