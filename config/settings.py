@@ -23,6 +23,10 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if os.environ.get('CSRF_TRUSTED_ORIGINS') else []
 
+if os.environ.get('SECURE_PROXY_SSL_HEADER'):
+    _header, _value = os.environ['SECURE_PROXY_SSL_HEADER'].split(',')
+    SECURE_PROXY_SSL_HEADER = (_header, _value)
+
 # Application definition
 
 INSTALLED_APPS = [
