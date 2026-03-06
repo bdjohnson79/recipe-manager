@@ -166,3 +166,13 @@ class AuthPageStylingTest(TestCase):
         response = self.client.get(reverse('account_logout'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.NAV_BRAND)
+
+    def test_social_login_cancelled_page_uses_base_template(self):
+        response = self.client.get(reverse('socialaccount_login_cancelled'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.NAV_BRAND)
+
+    def test_social_auth_error_page_uses_base_template(self):
+        response = self.client.get(reverse('socialaccount_login_error'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.NAV_BRAND)

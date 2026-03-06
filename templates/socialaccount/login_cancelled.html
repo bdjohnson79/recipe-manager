@@ -1,0 +1,13 @@
+{% extends "recipes/base.html" %}
+
+{% block title %}Login Cancelled{% endblock %}
+
+{% block content %}
+<div style="max-width:400px;margin:2rem auto;text-align:center">
+  <h1>Login Cancelled</h1>
+  <div class="card" style="margin-top:1rem">
+    <p style="margin-bottom:1rem">You cancelled the login process.</p>
+    <a href="{% url 'account_login' %}" class="btn btn-primary">Back to Sign In</a>
+  </div>
+</div>
+{% endblock %}

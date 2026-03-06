@@ -1,0 +1,13 @@
+{% extends "recipes/base.html" %}
+
+{% block title %}Login Error{% endblock %}
+
+{% block content %}
+<div style="max-width:400px;margin:2rem auto;text-align:center">
+  <h1>Login Error</h1>
+  <div class="card" style="margin-top:1rem">
+    <p style="margin-bottom:1rem;color:#dc3545">An error occurred while signing in with your third-party account.</p>
+    <a href="{% url 'account_login' %}" class="btn btn-primary">Back to Sign In</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "recipes/base.html" %}
+
+{% block title %}Complete Sign Up{% endblock %}
+
+{% block content %}
+<div style="max-width:400px;margin:2rem auto">
+  <h1>Complete Sign Up</h1>
+  <div class="card" style="margin-top:1rem">
+    <p style="margin-bottom:1rem;color:#6c757d">
+      You're signing in with {{ account.get_provider.name }}. Please complete the form below to finish creating your account.
+    </p>
+    <form method="post" action="{% url 'socialaccount_signup' %}">
+      {% csrf_token %}
+      {{ redirect_field }}
+      {% for field in form %}
+        <div class="form-group">
+          {{ field.label_tag }}
+          {{ field }}
+          {% if field.help_text %}
+            <small style="color:#6c757d;font-size:0.8rem">{{ field.help_text }}</small>
+          {% endif %}
+          {% if field.errors %}
+            <ul style="color:#dc3545;font-size:0.875rem;list-style:none;margin-top:0.25rem">
+              {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary" style="width:100%">Sign Up</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
