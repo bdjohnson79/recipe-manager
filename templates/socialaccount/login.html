@@ -1,0 +1,23 @@
+{% extends "recipes/base.html" %}
+
+{% block title %}{% if process == "connect" %}Connect {{ provider.name }}{% else %}Sign In via {{ provider.name }}{% endif %}{% endblock %}
+
+{% block content %}
+<div style="max-width:400px;margin:2rem auto;text-align:center">
+  <h1>{% if process == "connect" %}Connect {{ provider.name }}{% else %}Sign In via {{ provider.name }}{% endif %}</h1>
+  <div class="card" style="margin-top:1rem">
+    <p style="margin-bottom:1rem;color:#6c757d">
+      {% if process == "connect" %}
+        You are about to connect a new third-party account from {{ provider.name }}.
+      {% else %}
+        You are about to sign in using your {{ provider.name }} account.
+      {% endif %}
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary" style="width:100%">Continue with {{ provider.name }}</button>
+    </form>
+    <a href="{% url 'account_login' %}" class="btn btn-secondary" style="width:100%;margin-top:0.5rem">Cancel</a>
+  </div>
+</div>
+{% endblock %}
