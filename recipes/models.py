@@ -1,6 +1,14 @@
+from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
+
+
+def validate_image_size(image):
+    max_mb = 5
+    if image.size > max_mb * 1024 * 1024:
+        raise ValidationError(f'Image file size may not exceed {max_mb} MB.')
 
 
 class Tag(models.Model):
@@ -43,7 +51,13 @@ class Recipe(models.Model):
     prep_time = models.PositiveIntegerField(help_text='Prep time in minutes', default=0)
     cook_time = models.PositiveIntegerField(help_text='Cook time in minutes', default=0)
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default='easy')
-    image = models.ImageField(upload_to='recipes/', blank=True, null=True)
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='recipes',
+    )
+    image = models.ImageField(upload_to='recipes/', blank=True, null=True, validators=[validate_image_size])
     tags = models.ManyToManyField(Tag, blank=True, related_name='recipes')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -92,7 +106,7 @@ class RecipeStep(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='steps')
     step_number = models.PositiveSmallIntegerField()
     instruction = models.TextField()
-    image = models.ImageField(upload_to='steps/', blank=True, null=True)
+    image = models.ImageField(upload_to='steps/', blank=True, null=True, validators=[validate_image_size])
 
     class Meta:
         ordering = ['step_number']

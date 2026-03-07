@@ -99,7 +99,7 @@ class RecipeUpdateViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='pass')
         self.client.force_login(self.user)
-        self.recipe = make_recipe(title='Old Title')
+        self.recipe = make_recipe(title='Old Title', author=self.user)
         self.url = reverse('recipes:edit', kwargs={'slug': self.recipe.slug})
 
     def test_get_edit_form(self):
@@ -132,7 +132,7 @@ class RecipeDeleteViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='pass')
         self.client.force_login(self.user)
-        self.recipe = make_recipe(title='To Delete')
+        self.recipe = make_recipe(title='To Delete', author=self.user)
         self.url = reverse('recipes:delete', kwargs={'slug': self.recipe.slug})
 
     def test_get_confirm_page(self):

@@ -74,7 +74,10 @@ class RecipeCreateView(LoginRequiredMixin, CreateView):
         step_formset = ctx['step_formset']
 
         if ingredient_formset.is_valid() and step_formset.is_valid():
-            self.object = form.save()
+            self.object = form.save(commit=False)
+            self.object.author = self.request.user
+            self.object.save()
+            form.save_m2m()
             ingredient_formset.instance = self.object
             ingredient_formset.save()
             step_formset.instance = self.object
@@ -90,6 +93,9 @@ class RecipeUpdateView(LoginRequiredMixin, UpdateView):
     model = Recipe
     form_class = RecipeForm
     template_name = 'recipes/recipe_form.html'
+
+    def get_queryset(self):
+        return Recipe.objects.filter(author=self.request.user)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -128,3 +134,6 @@ class RecipeDeleteView(LoginRequiredMixin, DeleteView):
     template_name = 'recipes/recipe_confirm_delete.html'
     context_object_name = 'recipe'
     success_url = reverse_lazy('recipes:list')
+
+    def get_queryset(self):
+        return Recipe.objects.filter(author=self.request.user)
