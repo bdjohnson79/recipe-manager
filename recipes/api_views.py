@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, SAFE_METHODS
 
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -14,7 +14,18 @@ from .serializers import (
 )
 
 
+class IsApprovedUserOrReadOnly(IsAuthenticatedOrReadOnly):
+    def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+        if request.method not in SAFE_METHODS:
+            profile = getattr(request.user, 'profile', None)
+            return bool(profile and profile.is_approved)
+        return True
+
+
 class RecipeViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsApprovedUserOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = RecipeFilter
     search_fields = ['title', 'description', 'recipe_ingredients__ingredient__name']
@@ -39,11 +50,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class TagViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsApprovedUserOrReadOnly]
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsApprovedUserOrReadOnly]
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     filter_backends = [SearchFilter]

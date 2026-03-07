@@ -13,6 +13,15 @@ def make_recipe(**kwargs):
     return Recipe.objects.create(**defaults)
 
 
+def make_approved_user(**kwargs):
+    defaults = {'username': 'testuser', 'password': 'pass'}
+    defaults.update(kwargs)
+    user = User.objects.create_user(**defaults)
+    user.profile.is_approved = True
+    user.profile.save()
+    return user
+
+
 class RecipeListViewTest(TestCase):
     def setUp(self):
         self.url = reverse('recipes:list')
@@ -62,7 +71,7 @@ class RecipeDetailViewTest(TestCase):
 class RecipeCreateViewTest(TestCase):
     def setUp(self):
         self.url = reverse('recipes:create')
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = make_approved_user()
         self.client.force_login(self.user)
 
     def test_get_form(self):
@@ -94,10 +103,22 @@ class RecipeCreateViewTest(TestCase):
         recipe = Recipe.objects.get(title='New Recipe')
         self.assertRedirects(response, recipe.get_absolute_url())
 
+    def test_unapproved_user_redirected(self):
+        unapproved = User.objects.create_user(username='unapproved', password='pass')
+        self.client.force_login(unapproved)
+        response = self.client.get(self.url)
+        self.assertRedirects(response, reverse('recipes:list'))
+
+    def test_unapproved_user_sees_warning(self):
+        unapproved = User.objects.create_user(username='unapproved', password='pass')
+        self.client.force_login(unapproved)
+        response = self.client.get(self.url, follow=True)
+        self.assertContains(response, 'pending admin approval')
+
 
 class RecipeUpdateViewTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = make_approved_user()
         self.client.force_login(self.user)
         self.recipe = make_recipe(title='Old Title', author=self.user)
         self.url = reverse('recipes:edit', kwargs={'slug': self.recipe.slug})
@@ -127,10 +148,16 @@ class RecipeUpdateViewTest(TestCase):
         self.recipe.refresh_from_db()
         self.assertEqual(self.recipe.title, 'Updated Title')
 
+    def test_unapproved_user_redirected(self):
+        unapproved = User.objects.create_user(username='unapproved', password='pass')
+        self.client.force_login(unapproved)
+        response = self.client.get(self.url)
+        self.assertRedirects(response, reverse('recipes:list'))
+
 
 class RecipeDeleteViewTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = make_approved_user()
         self.client.force_login(self.user)
         self.recipe = make_recipe(title='To Delete', author=self.user)
         self.url = reverse('recipes:delete', kwargs={'slug': self.recipe.slug})
@@ -143,6 +170,12 @@ class RecipeDeleteViewTest(TestCase):
     def test_post_deletes_recipe(self):
         self.client.post(self.url)
         self.assertFalse(Recipe.objects.filter(pk=self.recipe.pk).exists())
+
+    def test_unapproved_user_redirected(self):
+        unapproved = User.objects.create_user(username='unapproved', password='pass')
+        self.client.force_login(unapproved)
+        response = self.client.get(self.url)
+        self.assertRedirects(response, reverse('recipes:list'))
 
 
 class AuthPageStylingTest(TestCase):

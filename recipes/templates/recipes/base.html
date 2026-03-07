@@ -64,6 +64,9 @@
     {% if user.is_staff %}<a href="/admin/" style="margin-left:auto">Admin</a>{% endif %}
     {% if user.is_authenticated %}
       <span style="color:#adb5bd">{{ user.email }}</span>
+      {% if not user.profile.is_approved %}
+        <span style="background:#ffc107;color:#212529;padding:0.2em 0.6em;border-radius:3px;font-size:0.8em">Pending Approval</span>
+      {% endif %}
       <a href="{% url 'account_logout' %}">Logout</a>
     {% else %}
       <a href="{% url 'account_login' %}">Login</a>

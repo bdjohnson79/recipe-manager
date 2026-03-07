@@ -1,5 +1,7 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView, DeleteView, DetailView, ListView, UpdateView,
@@ -7,6 +9,21 @@ from django.views.generic import (
 
 from .forms import RecipeForm, RecipeIngredientFormSet, RecipeStepFormSet
 from .models import Recipe
+
+
+class ApprovedUserRequiredMixin(LoginRequiredMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        profile = getattr(request.user, 'profile', None)
+        if not (profile and profile.is_approved):
+            messages.warning(
+                request,
+                'Your account is pending admin approval. '
+                'You can browse recipes but cannot make changes.'
+            )
+            return redirect('recipes:list')
+        return super(LoginRequiredMixin, self).dispatch(request, *args, **kwargs)
 
 
 class RecipeListView(ListView):
@@ -53,7 +70,7 @@ class RecipeDetailView(DetailView):
         )
 
 
-class RecipeCreateView(LoginRequiredMixin, CreateView):
+class RecipeCreateView(ApprovedUserRequiredMixin, CreateView):
     model = Recipe
     form_class = RecipeForm
     template_name = 'recipes/recipe_form.html'
@@ -89,7 +106,7 @@ class RecipeCreateView(LoginRequiredMixin, CreateView):
         return self.object.get_absolute_url()
 
 
-class RecipeUpdateView(LoginRequiredMixin, UpdateView):
+class RecipeUpdateView(ApprovedUserRequiredMixin, UpdateView):
     model = Recipe
     form_class = RecipeForm
     template_name = 'recipes/recipe_form.html'
@@ -129,7 +146,7 @@ class RecipeUpdateView(LoginRequiredMixin, UpdateView):
         return self.object.get_absolute_url()
 
 
-class RecipeDeleteView(LoginRequiredMixin, DeleteView):
+class RecipeDeleteView(ApprovedUserRequiredMixin, DeleteView):
     model = Recipe
     template_name = 'recipes/recipe_confirm_delete.html'
     context_object_name = 'recipe'

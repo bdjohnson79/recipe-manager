@@ -1,6 +1,41 @@
 from django.contrib import admin
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin
 
-from .models import Ingredient, Recipe, RecipeIngredient, RecipeStep, Tag
+from .models import Ingredient, Recipe, RecipeIngredient, RecipeStep, Tag, UserProfile
+
+User = get_user_model()
+
+
+class UserProfileInline(admin.StackedInline):
+    model = UserProfile
+    can_delete = False
+    fields = ('is_approved',)
+
+
+def approve_users(modeladmin, request, queryset):
+    for user in queryset:
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        profile.is_approved = True
+        profile.save()
+    modeladmin.message_user(request, f'{queryset.count()} user(s) approved.')
+approve_users.short_description = 'Approve selected users'
+
+
+class CustomUserAdmin(UserAdmin):
+    inlines = [UserProfileInline]
+    list_display = ['username', 'email', 'is_approved_display', 'is_staff', 'date_joined']
+    list_filter = ['profile__is_approved', 'is_staff']
+    actions = [approve_users]
+
+    def is_approved_display(self, obj):
+        return getattr(getattr(obj, 'profile', None), 'is_approved', False)
+    is_approved_display.boolean = True
+    is_approved_display.short_description = 'Approved'
+
+
+admin.site.unregister(User)
+admin.site.register(User, CustomUserAdmin)
 
 
 class RecipeIngredientInline(admin.TabularInline):

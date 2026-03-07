@@ -14,6 +14,15 @@ def make_recipe(**kwargs):
     return Recipe.objects.create(**defaults)
 
 
+def make_approved_user(**kwargs):
+    defaults = {'username': 'testuser', 'password': 'pass'}
+    defaults.update(kwargs)
+    user = User.objects.create_user(**defaults)
+    user.profile.is_approved = True
+    user.profile.save()
+    return user
+
+
 class RecipeAPIListTest(APITestCase):
     def setUp(self):
         self.url = '/recipes/api/recipes/'
@@ -47,10 +56,16 @@ class RecipeAPIListTest(APITestCase):
         response = self.client.post(self.url, {'title': 'Hack', 'prep_time': 1, 'cook_time': 1, 'difficulty': 'easy'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_unapproved_user_write_rejected(self):
+        unapproved = User.objects.create_user(username='unapproved', password='pass')
+        self.client.force_authenticate(user=unapproved)
+        response = self.client.post(self.url, {'title': 'Hack', 'prep_time': 1, 'cook_time': 1, 'difficulty': 'easy'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
 
 class RecipeAPIDetailTest(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = make_approved_user()
         self.recipe = make_recipe(title='Steak', author=self.user)
         self.url = f'/recipes/api/recipes/{self.recipe.pk}/'
 
@@ -67,7 +82,7 @@ class RecipeAPIDetailTest(APITestCase):
         self.assertEqual(self.recipe.title, 'Grilled Steak')
 
     def test_update_rejected_for_non_owner(self):
-        other = User.objects.create_user(username='other', password='pass')
+        other = make_approved_user(username='other')
         self.client.force_authenticate(user=other)
         response = self.client.patch(self.url, {'title': 'Hacked'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -82,11 +97,17 @@ class RecipeAPIDetailTest(APITestCase):
         response = self.client.patch(self.url, {'title': 'Hack'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_unapproved_user_update_rejected(self):
+        unapproved = User.objects.create_user(username='unapproved', password='pass')
+        self.client.force_authenticate(user=unapproved)
+        response = self.client.patch(self.url, {'title': 'Hack'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
 
 class RecipeAPICreateTest(APITestCase):
     def setUp(self):
         self.url = '/recipes/api/recipes/'
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = make_approved_user()
 
     def test_create_recipe(self):
         self.client.force_authenticate(user=self.user)
@@ -106,11 +127,17 @@ class RecipeAPICreateTest(APITestCase):
         response = self.client.post(self.url, {'title': 'Hack', 'prep_time': 1, 'cook_time': 1, 'difficulty': 'easy'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_unapproved_create_rejected(self):
+        unapproved = User.objects.create_user(username='unapproved', password='pass')
+        self.client.force_authenticate(user=unapproved)
+        response = self.client.post(self.url, {'title': 'Hack', 'prep_time': 1, 'cook_time': 1, 'difficulty': 'easy'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
 
 class TagAPITest(APITestCase):
     def setUp(self):
         self.url = '/recipes/api/tags/'
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = make_approved_user()
 
     def test_list(self):
         Tag.objects.create(name='Vegan', slug='vegan')
@@ -123,6 +150,12 @@ class TagAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_unauthenticated_create_rejected(self):
+        response = self.client.post(self.url, {'name': 'Hack', 'slug': 'hack'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_unapproved_create_rejected(self):
+        unapproved = User.objects.create_user(username='unapproved', password='pass')
+        self.client.force_authenticate(user=unapproved)
         response = self.client.post(self.url, {'name': 'Hack', 'slug': 'hack'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 

@@ -114,3 +114,15 @@ class RecipeStep(models.Model):
 
     def __str__(self):
         return f'Step {self.step_number}: {self.instruction[:50]}'
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='profile',
+    )
+    is_approved = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'Profile({self.user})'
