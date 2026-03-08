@@ -25,6 +25,13 @@
   <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}" style="max-width:100%;max-height:400px;object-fit:cover;border-radius:6px;margin-bottom:1rem">
 {% endif %}
 
+{% if recipe.author or recipe.source_url %}
+  <div class="meta" style="margin-bottom:1rem">
+    {% if recipe.author %}By {{ recipe.author }}{% endif %}
+    {% if recipe.source_url %}&nbsp;&bull;&nbsp;<a href="{{ recipe.source_url }}" target="_blank" rel="noopener">Source</a>{% endif %}
+  </div>
+{% endif %}
+
 {% if recipe.description %}
   <div class="card">{{ recipe.description|linebreaksbr }}</div>
 {% endif %}
@@ -56,9 +63,6 @@
       <div class="step-num">{{ step.step_number }}</div>
       <div>
         <p>{{ step.instruction|linebreaksbr }}</p>
-        {% if step.image %}
-          <img src="{{ step.image.url }}" alt="Step {{ step.step_number }}" style="max-width:400px;border-radius:4px;margin-top:0.5rem">
-        {% endif %}
       </div>
     </div>
   {% endfor %}

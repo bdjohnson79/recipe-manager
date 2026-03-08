@@ -43,7 +43,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return RecipeDetailSerializer
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        serializer.save(created_by=self.request.user)
 
 
 class TagViewSet(viewsets.ModelViewSet):

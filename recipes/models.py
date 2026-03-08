@@ -51,7 +51,9 @@ class Recipe(models.Model):
     prep_time = models.PositiveIntegerField(help_text='Prep time in minutes', default=0)
     cook_time = models.PositiveIntegerField(help_text='Cook time in minutes', default=0)
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default='easy')
-    author = models.ForeignKey(
+    author = models.CharField(max_length=200, blank=True, default='')
+    source_url = models.URLField(blank=True)
+    created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True, blank=True,
@@ -106,7 +108,6 @@ class RecipeStep(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='steps')
     step_number = models.PositiveSmallIntegerField()
     instruction = models.TextField()
-    image = models.ImageField(upload_to='steps/', blank=True, null=True, validators=[validate_image_size])
 
     class Meta:
         ordering = ['step_number']

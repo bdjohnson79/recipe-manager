@@ -102,7 +102,7 @@ class RecipeForm(forms.ModelForm):
 
     class Meta:
         model = Recipe
-        fields = ['title', 'description', 'servings', 'prep_time', 'cook_time', 'difficulty', 'image', 'tags']
+        fields = ['title', 'author', 'source_url', 'description', 'servings', 'prep_time', 'cook_time', 'difficulty', 'image', 'tags']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4}),
             'tags': forms.CheckboxSelectMultiple(),
@@ -135,7 +135,7 @@ class RecipeIngredientForm(forms.ModelForm):
 class RecipeStepForm(forms.ModelForm):
     class Meta:
         model = RecipeStep
-        fields = ['step_number', 'instruction', 'image']
+        fields = ['step_number', 'instruction']
         widgets = {
             'instruction': forms.Textarea(attrs={'rows': 3}),
         }

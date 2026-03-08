@@ -66,7 +66,7 @@ class RecipeAPIListTest(APITestCase):
 class RecipeAPIDetailTest(APITestCase):
     def setUp(self):
         self.user = make_approved_user()
-        self.recipe = make_recipe(title='Steak', author=self.user)
+        self.recipe = make_recipe(title='Steak', created_by=self.user)
         self.url = f'/recipes/api/recipes/{self.recipe.pk}/'
 
     def test_retrieve(self):
@@ -121,7 +121,7 @@ class RecipeAPICreateTest(APITestCase):
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(Recipe.objects.filter(title='New API Recipe').exists())
-        self.assertEqual(Recipe.objects.get(title='New API Recipe').author, self.user)
+        self.assertEqual(Recipe.objects.get(title='New API Recipe').created_by, self.user)
 
     def test_unauthenticated_create_rejected(self):
         response = self.client.post(self.url, {'title': 'Hack', 'prep_time': 1, 'cook_time': 1, 'difficulty': 'easy'}, format='json')

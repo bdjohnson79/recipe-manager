@@ -129,7 +129,7 @@ class RecipeUpdateViewTest(TestCase):
 
     def test_approved_user_can_edit_any_recipe(self):
         other = make_approved_user(username='other')
-        recipe = make_recipe(title='Someone Elses Recipe', author=other)
+        recipe = make_recipe(title='Someone Elses Recipe', created_by=other)
         url = reverse('recipes:edit', kwargs={'slug': recipe.slug})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
