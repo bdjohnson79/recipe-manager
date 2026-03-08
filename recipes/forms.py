@@ -122,7 +122,7 @@ class RecipeIngredientForm(forms.ModelForm):
             self.fields['ingredient_name'].initial = self.instance.ingredient.name
 
     def save(self, commit=True):
-        ingredient_name = self.cleaned_data.pop('ingredient_name', '').strip()
+        ingredient_name = self.cleaned_data.get('ingredient_name', '').strip()
         instance = super().save(commit=False)
         if ingredient_name:
             ingredient, _ = Ingredient.objects.get_or_create(name=ingredient_name)

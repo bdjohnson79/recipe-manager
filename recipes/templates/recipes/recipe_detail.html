@@ -69,8 +69,10 @@
 {% endif %}
 
 <div class="actions" style="margin-top:2rem;padding-top:1rem;border-top:1px solid #dee2e6">
-  <a href="{% url 'recipes:edit' recipe.slug %}" class="btn btn-primary">Edit</a>
-  <a href="{% url 'recipes:delete' recipe.slug %}" class="btn btn-danger">Delete</a>
+  {% if user.is_authenticated and user.is_staff or user.profile.is_approved %}
+    <a href="{% url 'recipes:edit' recipe.slug %}" class="btn btn-primary">Edit</a>
+    <a href="{% url 'recipes:delete' recipe.slug %}" class="btn btn-danger">Delete</a>
+  {% endif %}
   <a href="{% url 'recipes:list' %}" class="btn btn-secondary">Back to list</a>
 </div>
 {% endblock %}

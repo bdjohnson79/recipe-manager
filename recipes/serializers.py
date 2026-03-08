@@ -64,6 +64,7 @@ class RecipeDetailSerializer(serializers.ModelSerializer):
     def _save_ingredients(self, recipe, ingredients_data):
         recipe.recipe_ingredients.all().delete()
         for item in ingredients_data:
+            item = dict(item)
             ingredient_data = item.pop('ingredient', {})
             ingredient_name = ingredient_data.get('name', '')
             if ingredient_name:

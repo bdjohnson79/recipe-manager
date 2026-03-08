@@ -15,6 +15,8 @@ class ApprovedUserRequiredMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return self.handle_no_permission()
+        if request.user.is_staff:
+            return super(LoginRequiredMixin, self).dispatch(request, *args, **kwargs)
         profile = getattr(request.user, 'profile', None)
         if not (profile and profile.is_approved):
             messages.warning(
@@ -99,7 +101,7 @@ class RecipeCreateView(ApprovedUserRequiredMixin, CreateView):
             ingredient_formset.save()
             step_formset.instance = self.object
             step_formset.save()
-            return super().form_valid(form)
+            return redirect(self.get_success_url())
         return self.render_to_response(ctx)
 
     def get_success_url(self):
@@ -136,7 +138,7 @@ class RecipeUpdateView(ApprovedUserRequiredMixin, UpdateView):
             ingredient_formset.save()
             step_formset.instance = self.object
             step_formset.save()
-            return super().form_valid(form)
+            return redirect(self.get_success_url())
         return self.render_to_response(ctx)
 
     def get_success_url(self):

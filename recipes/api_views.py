@@ -19,6 +19,8 @@ class IsApprovedUserOrReadOnly(IsAuthenticatedOrReadOnly):
         if not super().has_permission(request, view):
             return False
         if request.method not in SAFE_METHODS:
+            if request.user.is_staff:
+                return True
             profile = getattr(request.user, 'profile', None)
             return bool(profile and profile.is_approved)
         return True
