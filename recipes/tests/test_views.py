@@ -120,11 +120,18 @@ class RecipeUpdateViewTest(TestCase):
     def setUp(self):
         self.user = make_approved_user()
         self.client.force_login(self.user)
-        self.recipe = make_recipe(title='Old Title', author=self.user)
+        self.recipe = make_recipe(title='Old Title')
         self.url = reverse('recipes:edit', kwargs={'slug': self.recipe.slug})
 
     def test_get_edit_form(self):
         response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_approved_user_can_edit_any_recipe(self):
+        other = make_approved_user(username='other')
+        recipe = make_recipe(title='Someone Elses Recipe', author=other)
+        url = reverse('recipes:edit', kwargs={'slug': recipe.slug})
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
     def test_post_updates_recipe(self):
@@ -159,7 +166,7 @@ class RecipeDeleteViewTest(TestCase):
     def setUp(self):
         self.user = make_approved_user()
         self.client.force_login(self.user)
-        self.recipe = make_recipe(title='To Delete', author=self.user)
+        self.recipe = make_recipe(title='To Delete')
         self.url = reverse('recipes:delete', kwargs={'slug': self.recipe.slug})
 
     def test_get_confirm_page(self):

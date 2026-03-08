@@ -33,12 +33,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
-        qs = Recipe.objects.prefetch_related(
+        return Recipe.objects.prefetch_related(
             'tags', 'recipe_ingredients__ingredient', 'steps'
         ).distinct()
-        if self.action in ('update', 'partial_update', 'destroy'):
-            qs = qs.filter(author=self.request.user)
-        return qs
 
     def get_serializer_class(self):
         if self.action == 'list':

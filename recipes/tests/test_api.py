@@ -81,11 +81,11 @@ class RecipeAPIDetailTest(APITestCase):
         self.recipe.refresh_from_db()
         self.assertEqual(self.recipe.title, 'Grilled Steak')
 
-    def test_update_rejected_for_non_owner(self):
+    def test_approved_non_owner_can_update(self):
         other = make_approved_user(username='other')
         self.client.force_authenticate(user=other)
-        response = self.client.patch(self.url, {'title': 'Hacked'}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        response = self.client.patch(self.url, {'title': 'Edited by Other'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_delete(self):
         self.client.force_authenticate(user=self.user)
