@@ -2,8 +2,33 @@
 
 {% block title %}{{ recipe.title }}{% endblock %}
 
+{% block extra_head %}
+<style>
+  .no-print { display: none !important; }
+  .print-only { display: none; }
+
+  @media print {
+    nav, .messages, .actions, .no-print { display: none !important; }
+    .print-only { display: block; }
+    body { background: #fff; color: #000; font-size: 11pt; }
+    .container { max-width: 100%; padding: 0; margin: 0; }
+    .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    a { color: inherit; text-decoration: none; }
+    a[href]::after { content: none; }
+    td, th { border-bottom: 1px solid #ccc; }
+    .step { page-break-inside: avoid; }
+    .card { border: none; padding: 0; margin-bottom: 0.75rem; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<h1>{{ recipe.title }}</h1>
+<div style="display:flex; align-items:baseline; gap:1rem; margin-bottom:1rem;">
+  <h1 style="margin-bottom:0">{{ recipe.title }}</h1>
+  <button class="btn btn-secondary no-print"
+          onclick="window.print(); return false;"
+          style="font-size:0.85rem; padding:0.3rem 0.8rem;">Print</button>
+</div>
 
 <div class="meta" style="margin-bottom:1rem">
   <span class="badge badge-{{ recipe.difficulty }}">{{ recipe.get_difficulty_display }}</span>
@@ -37,7 +62,17 @@
 {% endif %}
 
 {% if recipe.recipe_ingredients.all %}
-  <h2 style="margin-top:1.5rem">Ingredients</h2>
+<div id="scaler-section" data-base-servings="{{ recipe.servings }}">
+  <div class="no-print" style="margin-top:1.5rem; display:flex; align-items:center; gap:0.75rem;">
+    <h2 style="margin:0">Ingredients</h2>
+    <label style="font-size:0.9rem; font-weight:normal; display:flex; align-items:center; gap:0.4rem; margin:0;">
+      Serves
+      <input type="number" id="servings-input" min="1" max="999"
+             value="{{ recipe.servings }}"
+             style="width:4rem; padding:0.25rem 0.4rem; font-size:0.9rem;">
+    </label>
+  </div>
+  <h2 class="print-only" style="margin-top:1.5rem">Ingredients (Serves {{ recipe.servings }})</h2>
   <div class="card">
     <table>
       <thead>
@@ -46,7 +81,9 @@
       <tbody>
         {% for ri in recipe.recipe_ingredients.all %}
           <tr>
-            <td>{{ ri.quantity }} {% if ri.unit %}{{ ri.unit }}{% endif %}</td>
+            <td class="qty-cell"
+                data-base-qty="{{ ri.quantity }}"
+                data-unit="{{ ri.unit }}">{{ ri.quantity }}{% if ri.unit %} {{ ri.unit }}{% endif %}</td>
             <td>{{ ri.ingredient.name }}</td>
             <td>{{ ri.notes }}</td>
           </tr>
@@ -54,6 +91,7 @@
       </tbody>
     </table>
   </div>
+</div>
 {% endif %}
 
 {% if recipe.steps.all %}
@@ -75,4 +113,64 @@
   {% endif %}
   <a href="{% url 'recipes:list' %}" class="btn btn-secondary">Back to list</a>
 </div>
+
+<script>
+(function () {
+  function parseQty(str) {
+    str = str.trim();
+    if (!str) return null;
+    var mixed = str.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)$/);
+    if (mixed) return parseFloat(mixed[1]) + parseFloat(mixed[2]) / parseFloat(mixed[3]);
+    var frac = str.match(/^(\d+)\s*\/\s*(\d+)$/);
+    if (frac) return parseFloat(frac[1]) / parseFloat(frac[2]);
+    var num = parseFloat(str);
+    return isNaN(num) ? null : num;
+  }
+
+  var FRACTIONS = [
+    [1/8,'1/8'],[1/4,'1/4'],[1/3,'1/3'],[3/8,'3/8'],[1/2,'1/2'],
+    [5/8,'5/8'],[2/3,'2/3'],[3/4,'3/4'],[7/8,'7/8'],
+  ];
+  var EPS = 0.01;
+
+  function formatQty(val) {
+    if (val === null) return null;
+    var whole = Math.floor(val);
+    var frac  = val - whole;
+    if (whole === 0) {
+      for (var i = 0; i < FRACTIONS.length; i++)
+        if (Math.abs(frac - FRACTIONS[i][0]) < EPS) return FRACTIONS[i][1];
+    } else {
+      if (Math.abs(frac) < EPS) return String(whole);
+      for (var i = 0; i < FRACTIONS.length; i++)
+        if (Math.abs(frac - FRACTIONS[i][0]) < EPS) return whole + ' ' + FRACTIONS[i][1];
+    }
+    return parseFloat(val.toFixed(2)).toString();
+  }
+
+  var section = document.getElementById('scaler-section');
+  if (!section) return;
+  var baseServings = parseInt(section.dataset.baseServings, 10);
+  var input        = document.getElementById('servings-input');
+  var cells        = section.querySelectorAll('.qty-cell');
+
+  function scale() {
+    var newServings = parseInt(input.value, 10);
+    if (!newServings || newServings < 1) return;
+    var ratio = newServings / baseServings;
+    cells.forEach(function (td) {
+      var base = parseQty(td.dataset.baseQty);
+      var unit = td.dataset.unit;
+      if (base === null) {
+        td.textContent = td.dataset.baseQty + (unit ? ' ' + unit : '');
+        return;
+      }
+      td.textContent = formatQty(base * ratio) + (unit ? ' ' + unit : '');
+    });
+  }
+
+  input.addEventListener('input', scale);
+  input.addEventListener('change', scale);
+}());
+</script>
 {% endblock %}
