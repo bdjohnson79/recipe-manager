@@ -102,6 +102,7 @@ class RecipeCreateView(ApprovedUserRequiredMixin, CreateView):
             step_formset.instance = self.object
             step_formset.save()
             return redirect(self.get_success_url())
+        messages.error(self.request, "Please correct the errors below before saving.")
         return self.render_to_response(ctx)
 
     def get_success_url(self):
@@ -139,6 +140,7 @@ class RecipeUpdateView(ApprovedUserRequiredMixin, UpdateView):
             step_formset.instance = self.object
             step_formset.save()
             return redirect(self.get_success_url())
+        messages.error(self.request, "Please correct the errors below before saving.")
         return self.render_to_response(ctx)
 
     def get_success_url(self):

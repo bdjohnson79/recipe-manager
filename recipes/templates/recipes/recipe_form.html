@@ -36,6 +36,7 @@
   .row-remove { flex-shrink: 0; padding-top: 0.35rem; }
   .row-remove label { display: flex; align-items: center; gap: 0.25rem; cursor: pointer; color: #dc3545; font-size: 0.85rem; }
   .sortable-row.marked-delete { opacity: 0.45; background: #fff5f5; }
+  .sortable-row.form-errors { border-color: #dc3545; background: #fff8f8; }
 </style>
 {% endblock %}
 
@@ -66,10 +67,15 @@
   <!-- ── Ingredients ─────────────────────────────────────── -->
   <div class="card" style="margin-top:1rem">
     <h2>Ingredients</h2>
+    {% if ingredient_formset.non_form_errors %}
+      <ul style="color:#dc3545;font-size:0.875rem;list-style:none;margin-bottom:0.75rem">
+        {% for error in ingredient_formset.non_form_errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    {% endif %}
     {{ ingredient_formset.management_form }}
     <div id="ingredient-rows">
       {% for ing_form in ingredient_formset %}
-        <div class="sortable-row">
+        <div class="sortable-row{% if ing_form.errors %} form-errors{% endif %}">
           <span class="drag-handle" draggable="true" title="Drag to reorder">⠿</span>
           <div class="row-fields">
             {{ ing_form.order.as_hidden }}
@@ -78,10 +84,20 @@
               <div class="form-group">
                 <label>Ingredient</label>
                 {{ ing_form.ingredient_name }}
+                {% if ing_form.ingredient_name.errors %}
+                  <ul style="color:#dc3545;font-size:0.875rem;list-style:none;margin-top:0.25rem">
+                    {% for error in ing_form.ingredient_name.errors %}<li>{{ error }}</li>{% endfor %}
+                  </ul>
+                {% endif %}
               </div>
               <div class="form-group">
                 <label>Quantity</label>
                 {{ ing_form.quantity }}
+                {% if ing_form.quantity.errors %}
+                  <ul style="color:#dc3545;font-size:0.875rem;list-style:none;margin-top:0.25rem">
+                    {% for error in ing_form.quantity.errors %}<li>{{ error }}</li>{% endfor %}
+                  </ul>
+                {% endif %}
               </div>
               <div class="form-group">
                 <label>Unit</label>
@@ -92,6 +108,11 @@
                 {{ ing_form.notes }}
               </div>
             </div>
+            {% if ing_form.non_field_errors %}
+              <ul style="color:#dc3545;font-size:0.875rem;list-style:none;margin-top:0.25rem">
+                {% for error in ing_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+              </ul>
+            {% endif %}
           </div>
           <div class="row-remove">
             <label>{{ ing_form.DELETE }} Remove</label>
@@ -108,10 +129,15 @@
   <!-- ── Steps ──────────────────────────────────────────── -->
   <div class="card" style="margin-top:1rem">
     <h2>Steps</h2>
+    {% if step_formset.non_form_errors %}
+      <ul style="color:#dc3545;font-size:0.875rem;list-style:none;margin-bottom:0.75rem">
+        {% for error in step_formset.non_form_errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    {% endif %}
     {{ step_formset.management_form }}
     <div id="step-rows">
       {% for step_form in step_formset %}
-        <div class="sortable-row">
+        <div class="sortable-row{% if step_form.errors %} form-errors{% endif %}">
           <span class="drag-handle" draggable="true" title="Drag to reorder">⠿</span>
           <div class="row-fields">
             {{ step_form.step_number.as_hidden }}
@@ -119,7 +145,17 @@
             <div class="form-group">
               <label>Instruction</label>
               {{ step_form.instruction }}
+              {% if step_form.instruction.errors %}
+                <ul style="color:#dc3545;font-size:0.875rem;list-style:none;margin-top:0.25rem">
+                  {% for error in step_form.instruction.errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+              {% endif %}
             </div>
+            {% if step_form.non_field_errors %}
+              <ul style="color:#dc3545;font-size:0.875rem;list-style:none;margin-top:0.25rem">
+                {% for error in step_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+              </ul>
+            {% endif %}
           </div>
           <div class="row-remove">
             <label>{{ step_form.DELETE }} Remove</label>
