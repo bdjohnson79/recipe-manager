@@ -35,7 +35,7 @@ class RecipeListView(ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        qs = Recipe.objects.prefetch_related('tags').distinct()
+        qs = Recipe.objects.prefetch_related('tags').distinct().order_by('title')
         q = self.request.GET.get('q', '').strip()
         tag = self.request.GET.get('tag', '').strip()
         difficulty = self.request.GET.get('difficulty', '').strip()
