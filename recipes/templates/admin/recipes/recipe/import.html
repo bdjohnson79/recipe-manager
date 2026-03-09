@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>{{ title }}</h1>
+
+{% if created is not None %}
+  <p style="color:green"><strong>{{ created }} recipe(s) imported.</strong></p>
+  {% if skipped %}<p>{{ skipped }} skipped (already exist).</p>{% endif %}
+  {% if errors %}
+    <p style="color:red">{{ errors|length }} error(s):</p>
+    <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+  {% endif %}
+  <p><a href="{% url 'admin:recipes_recipe_changelist' %}">← Back to recipe list</a></p>
+{% else %}
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <p>
+      <label for="json_file">Select phpMyAdmin JSON export:</label><br>
+      <input type="file" name="json_file" id="json_file" accept=".json" required>
+    </p>
+    <p>
+      <strong>Note:</strong> Recipes with titles that already exist will be skipped.
+      Ingredients are imported as individual lines (quantity/unit left blank).
+      Instructions are stored as a single step.
+    </p>
+    <input type="submit" value="Import" class="default">
+  </form>
+{% endif %}
+{% endblock %}

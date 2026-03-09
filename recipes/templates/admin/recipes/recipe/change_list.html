@@ -1,0 +1,7 @@
+{% extends "admin/change_list.html" %}
+{% block object-tools-items %}
+  <li>
+    <a href="{% url 'admin:recipes_recipe_import' %}" class="addlink">Import Recipes</a>
+  </li>
+  {{ block.super }}
+{% endblock %}
