@@ -81,6 +81,11 @@
     {% endfor %}
   </select>
   <input type="text" name="tag" value="{{ tag }}" placeholder="Tag slug">
+  <select name="per_page" onchange="this.form.submit()" title="Results per page">
+    {% for n in per_page_options %}
+      <option value="{{ n }}" {% if per_page == n %}selected{% endif %}>{{ n }} per page</option>
+    {% endfor %}
+  </select>
   <button type="submit" class="btn btn-primary">Search</button>
   {% if q or tag or difficulty %}
     <a href="{% url 'recipes:list' %}" class="btn btn-secondary">Clear</a>
@@ -175,11 +180,11 @@
   {% if is_paginated %}
     <div class="pagination">
       {% if page_obj.has_previous %}
-        <span class="page-item"><a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if tag %}&tag={{ tag }}{% endif %}{% if difficulty %}&difficulty={{ difficulty }}{% endif %}">&laquo; Prev</a></span>
+        <span class="page-item"><a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if tag %}&tag={{ tag }}{% endif %}{% if difficulty %}&difficulty={{ difficulty }}{% endif %}&per_page={{ per_page }}">&laquo; Prev</a></span>
       {% endif %}
       <span class="page-item active"><span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></span>
       {% if page_obj.has_next %}
-        <span class="page-item"><a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if tag %}&tag={{ tag }}{% endif %}{% if difficulty %}&difficulty={{ difficulty }}{% endif %}">Next &raquo;</a></span>
+        <span class="page-item"><a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if tag %}&tag={{ tag }}{% endif %}{% if difficulty %}&difficulty={{ difficulty }}{% endif %}&per_page={{ per_page }}">Next &raquo;</a></span>
       {% endif %}
     </div>
   {% endif %}

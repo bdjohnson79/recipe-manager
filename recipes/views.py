@@ -44,6 +44,14 @@ class RecipeListView(ListView):
     template_name = 'recipes/recipe_list.html'
     context_object_name = 'recipes'
     paginate_by = 20
+    _ALLOWED_PER_PAGE = (20, 50, 100, 200)
+
+    def get_paginate_by(self, queryset):
+        try:
+            value = int(self.request.GET.get('per_page', 0))
+        except (ValueError, TypeError):
+            return self.paginate_by
+        return value if value in self._ALLOWED_PER_PAGE else self.paginate_by
 
     def get_queryset(self):
         qs = Recipe.objects.prefetch_related('tags').distinct().order_by('title')
@@ -71,6 +79,8 @@ class RecipeListView(ListView):
         ctx['difficulty_choices'] = Recipe.DIFFICULTY_CHOICES
         ctx['all_tags'] = Tag.objects.order_by('name')
         ctx['user_can_edit'] = _user_can_edit(self.request.user)
+        ctx['per_page'] = self.get_paginate_by(None)
+        ctx['per_page_options'] = self._ALLOWED_PER_PAGE
         return ctx
 
 
