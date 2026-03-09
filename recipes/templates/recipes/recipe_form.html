@@ -3,6 +3,14 @@
 {% block title %}{% if object %}Edit {{ object.title }}{% else %}New Recipe{% endif %}{% endblock %}
 
 {% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css">
+<style>
+  .ts-wrapper { max-width: 480px; }
+  .ts-wrapper .ts-control { border: 1px solid #ced4da; border-radius: 4px; font-size: 0.95rem; font-family: inherit; padding: 0.35rem 0.5rem; }
+  .ts-wrapper.focus .ts-control { border-color: #86b7fe; outline: 0; box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25); }
+  .ts-dropdown { font-size: 0.95rem; font-family: inherit; border: 1px solid #ced4da; border-radius: 4px; }
+  .ts-dropdown .create { color: #0d6efd; }
+</style>
 <style>
   .sortable-row {
     display: flex;
@@ -228,6 +236,39 @@
   </div>
 </template>
 
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script>
+// ── Tag selector ─────────────────────────────────────────
+(function () {
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  new TomSelect('#id_tags', {
+    plugins: ['remove_button'],
+    maxOptions: null,
+    create: function (input, callback) {
+      fetch('{% url "recipes:tag_create_ajax" %}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': csrfToken,
+        },
+        body: 'name=' + encodeURIComponent(input),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.id) callback({ value: data.id, text: data.name });
+          else callback();
+        })
+        .catch(() => callback());
+    },
+    onItemAdd: function () { this.setTextboxValue(''); },
+    render: {
+      option_create: function (data) {
+        return '<div class="create">Add tag <strong>' + data.input + '</strong>&hellip;</div>';
+      },
+    },
+  });
+})();
+</script>
 <script>
 // ── Drag-and-drop ────────────────────────────────────────
 let draggedRow = null;

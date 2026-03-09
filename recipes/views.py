@@ -1,8 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from django.views.decorators.http import require_POST
 from django.views.generic import (
     CreateView, DeleteView, DetailView, ListView, UpdateView,
 )
@@ -188,3 +190,21 @@ class RecipeDeleteView(ApprovedUserRequiredMixin, DeleteView):
     template_name = 'recipes/recipe_confirm_delete.html'
     context_object_name = 'recipe'
     success_url = reverse_lazy('recipes:list')
+
+
+@require_POST
+def tag_create_ajax(request):
+    user = request.user
+    is_approved = (
+        user.is_authenticated and (
+            user.is_staff or
+            getattr(getattr(user, 'profile', None), 'is_approved', False)
+        )
+    )
+    if not is_approved:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    name = request.POST.get('name', '').strip()
+    if not name:
+        return JsonResponse({'error': 'Name required'}, status=400)
+    tag, _ = Tag.objects.get_or_create(name=name)
+    return JsonResponse({'id': tag.pk, 'name': tag.name})
