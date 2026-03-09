@@ -1,9 +1,76 @@
 {% extends "recipes/base.html" %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css">
+<style>
+  .list-header {
+    display: flex; align-items: center; gap: 1rem;
+    margin-bottom: 0.75rem; flex-wrap: wrap;
+  }
+  .list-header h1 { margin-bottom: 0; }
+  .view-toggle { display: flex; gap: 0.4rem; margin-left: auto; }
+  .view-toggle .btn {
+    padding: 0.35rem 0.7rem; font-size: 0.875rem;
+    background: #fff; border: 1px solid #ced4da; color: #495057;
+  }
+  .view-toggle .btn.active {
+    background: #0d6efd; color: #fff; border-color: #0d6efd;
+  }
+
+  /* List view */
+  #list-view { display: none; }
+  #list-view.active { display: block; }
+  #card-view.hidden { display: none; }
+
+  .recipe-table { width: 100%; border-collapse: collapse; }
+  .recipe-table th {
+    padding: 0.5rem 0.75rem; border-bottom: 2px solid #dee2e6;
+    text-align: left; font-size: 0.85rem; color: #6c757d;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    background: #f8f9fa;
+  }
+  .recipe-table td {
+    padding: 0.55rem 0.75rem; border-bottom: 1px solid #dee2e6;
+    vertical-align: middle;
+  }
+  .recipe-table tr:hover td { background: #f0f4ff; }
+  .recipe-table .col-check { width: 2rem; text-align: center; }
+  .recipe-table .col-title { font-weight: 500; }
+  .recipe-table .col-diff { width: 90px; }
+  .recipe-table .col-time { width: 80px; color: #6c757d; font-size: 0.875rem; white-space: nowrap; }
+  .recipe-table .col-tags { }
+  .recipe-table .col-tags .tag { margin-bottom: 0.15rem; display: inline-block; }
+
+  /* Bulk action bar */
+  .bulk-bar {
+    display: none; position: sticky; bottom: 1.25rem;
+    background: #212529; color: #fff; border-radius: 6px;
+    padding: 0.65rem 1rem; margin-top: 1rem;
+    align-items: center; gap: 0.75rem; flex-wrap: wrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    z-index: 100;
+  }
+  .bulk-bar.visible { display: flex; }
+  .bulk-bar .selected-count { font-size: 0.9rem; white-space: nowrap; color: #adb5bd; }
+  .bulk-bar .tag-picker-wrap { flex: 1; min-width: 220px; max-width: 400px; }
+  .bulk-bar .ts-wrapper .ts-control {
+    background: #fff; border-color: #6c757d; font-size: 0.875rem;
+  }
+  .bulk-bar .btn { flex-shrink: 0; }
+  .bulk-bar .btn-secondary { background: #6c757d; }
+</style>
+{% endblock %}
+
 {% block title %}Recipes{% endblock %}
 
 {% block content %}
-<h1>Recipes</h1>
+<div class="list-header">
+  <h1>Recipes</h1>
+  <div class="view-toggle">
+    <button class="btn active" id="btn-card-view" onclick="setView('card')" title="Card view">&#9783; Cards</button>
+    <button class="btn" id="btn-list-view" onclick="setView('list')" title="List view">&#8803; List</button>
+  </div>
+</div>
 
 <form method="get" class="search-bar">
   <input type="text" name="q" value="{{ q }}" placeholder="Search recipes...">
@@ -21,7 +88,8 @@
 </form>
 
 {% if recipes %}
-  <div class="recipe-grid">
+  {# ── Card view ── #}
+  <div class="recipe-grid" id="card-view">
     {% for recipe in recipes %}
       <div class="card recipe-card">
         {% if recipe.image %}
@@ -47,6 +115,63 @@
     {% endfor %}
   </div>
 
+  {# ── List view ── #}
+  <form method="post" action="{% url 'recipes:bulk_tag' %}" id="bulk-form">
+    {% csrf_token %}
+    <div id="list-view">
+      <table class="recipe-table">
+        <thead>
+          <tr>
+            <th class="col-check">
+              <input type="checkbox" id="select-all" title="Select all">
+            </th>
+            <th>Recipe</th>
+            <th class="col-diff">Difficulty</th>
+            <th class="col-time">Time</th>
+            <th class="col-tags">Tags</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for recipe in recipes %}
+          <tr>
+            <td class="col-check">
+              <input type="checkbox" name="recipe_ids" value="{{ recipe.pk }}" class="recipe-check">
+            </td>
+            <td class="col-title">
+              <a href="{{ recipe.get_absolute_url }}">{{ recipe.title }}</a>
+            </td>
+            <td class="col-diff">
+              <span class="badge badge-{{ recipe.difficulty }}">{{ recipe.get_difficulty_display }}</span>
+            </td>
+            <td class="col-time">{{ recipe.total_time }}m</td>
+            <td class="col-tags">
+              {% for t in recipe.tags.all %}
+                <a href="?tag={{ t.slug }}" class="tag">{{ t.name }}</a>
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {# Bulk action bar — only for approved users #}
+    {% if user_can_edit %}
+    <div class="bulk-bar" id="bulk-bar">
+      <span class="selected-count" id="selected-count">0 selected</span>
+      <div class="tag-picker-wrap">
+        <select id="bulk-tag-select" name="tag_ids" multiple placeholder="Choose tags to apply…">
+          {% for t in all_tags %}
+            <option value="{{ t.pk }}">{{ t.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Apply Tags</button>
+      <button type="button" class="btn btn-secondary" onclick="clearSelection()">Cancel</button>
+    </div>
+    {% endif %}
+  </form>
+
   {% if is_paginated %}
     <div class="pagination">
       {% if page_obj.has_previous %}
@@ -61,4 +186,81 @@
 {% else %}
   <p>No recipes found. <a href="{% url 'recipes:create' %}">Add one!</a></p>
 {% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script>
+  // ── View toggle ──────────────────────────────────────────
+  function setView(view) {
+    localStorage.setItem('recipeView', view);
+    applyView(view);
+  }
+
+  function applyView(view) {
+    const cardView = document.getElementById('card-view');
+    const listView = document.getElementById('list-view');
+    const btnCard  = document.getElementById('btn-card-view');
+    const btnList  = document.getElementById('btn-list-view');
+    if (!cardView || !listView) return;
+    if (view === 'list') {
+      cardView.classList.add('hidden');
+      listView.classList.add('active');
+      btnCard.classList.remove('active');
+      btnList.classList.add('active');
+    } else {
+      cardView.classList.remove('hidden');
+      listView.classList.remove('active');
+      btnCard.classList.add('active');
+      btnList.classList.remove('active');
+    }
+  }
+
+  applyView(localStorage.getItem('recipeView') || 'card');
+
+  // ── Checkbox / bulk bar ──────────────────────────────────
+  const selectAll   = document.getElementById('select-all');
+  const bulkBar     = document.getElementById('bulk-bar');
+  const countLabel  = document.getElementById('selected-count');
+
+  function updateBulkBar() {
+    const checked = document.querySelectorAll('.recipe-check:checked');
+    if (!bulkBar) return;
+    if (checked.length > 0) {
+      bulkBar.classList.add('visible');
+    } else {
+      bulkBar.classList.remove('visible');
+    }
+    countLabel.textContent = checked.length + ' selected';
+    if (selectAll) {
+      const all = document.querySelectorAll('.recipe-check');
+      selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+      selectAll.checked = checked.length === all.length && all.length > 0;
+    }
+  }
+
+  function clearSelection() {
+    document.querySelectorAll('.recipe-check').forEach(cb => cb.checked = false);
+    if (selectAll) selectAll.checked = false;
+    updateBulkBar();
+  }
+
+  if (selectAll) {
+    selectAll.addEventListener('change', function () {
+      document.querySelectorAll('.recipe-check').forEach(cb => cb.checked = this.checked);
+      updateBulkBar();
+    });
+  }
+
+  document.querySelectorAll('.recipe-check').forEach(cb => {
+    cb.addEventListener('change', updateBulkBar);
+  });
+
+  // ── Tom Select for bulk tag picker ───────────────────────
+  const bulkTagEl = document.getElementById('bulk-tag-select');
+  if (bulkTagEl) {
+    new TomSelect(bulkTagEl, {
+      plugins: ['remove_button'],
+      placeholder: 'Choose tags to apply…',
+    });
+  }
+</script>
 {% endblock %}

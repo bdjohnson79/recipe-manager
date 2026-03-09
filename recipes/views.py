@@ -9,8 +9,17 @@ from django.views.generic import (
     CreateView, DeleteView, DetailView, ListView, UpdateView,
 )
 
+
 from .forms import RecipeForm, RecipeIngredientFormSet, RecipeStepFormSet, TagForm
 from .models import Recipe, Tag
+
+
+def _user_can_edit(user):
+    if not user.is_authenticated:
+        return False
+    if user.is_staff:
+        return True
+    return getattr(getattr(user, 'profile', None), 'is_approved', False)
 
 
 class ApprovedUserRequiredMixin(LoginRequiredMixin):
@@ -60,6 +69,8 @@ class RecipeListView(ListView):
         ctx['tag'] = self.request.GET.get('tag', '')
         ctx['difficulty'] = self.request.GET.get('difficulty', '')
         ctx['difficulty_choices'] = Recipe.DIFFICULTY_CHOICES
+        ctx['all_tags'] = Tag.objects.order_by('name')
+        ctx['user_can_edit'] = _user_can_edit(self.request.user)
         return ctx
 
 
@@ -158,12 +169,7 @@ class TagListView(ListView):
         return Tag.objects.annotate(recipe_count=Count('recipes')).order_by('name')
 
     def _user_can_create(self):
-        user = self.request.user
-        if not user.is_authenticated:
-            return False
-        if user.is_staff:
-            return True
-        return getattr(getattr(user, 'profile', None), 'is_approved', False)
+        return _user_can_edit(self.request.user)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -190,6 +196,27 @@ class RecipeDeleteView(ApprovedUserRequiredMixin, DeleteView):
     template_name = 'recipes/recipe_confirm_delete.html'
     context_object_name = 'recipe'
     success_url = reverse_lazy('recipes:list')
+
+
+@require_POST
+def bulk_tag_recipes(request):
+    if not _user_can_edit(request.user):
+        messages.error(request, "You don't have permission to modify recipes.")
+        return redirect('recipes:list')
+    recipe_ids = request.POST.getlist('recipe_ids')
+    tag_ids = request.POST.getlist('tag_ids')
+    if not recipe_ids:
+        messages.warning(request, "No recipes selected.")
+        return redirect('recipes:list')
+    if not tag_ids:
+        messages.warning(request, "No tags selected.")
+        return redirect('recipes:list')
+    recipes = Recipe.objects.filter(pk__in=recipe_ids)
+    tags = Tag.objects.filter(pk__in=tag_ids)
+    for recipe in recipes:
+        recipe.tags.add(*tags)
+    messages.success(request, f"Added {tags.count()} tag(s) to {recipes.count()} recipe(s).")
+    return redirect('recipes:list')
 
 
 @require_POST
