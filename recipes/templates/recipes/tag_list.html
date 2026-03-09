@@ -1,0 +1,43 @@
+{% extends "recipes/base.html" %}
+
+{% block title %}Tags{% endblock %}
+
+{% block content %}
+<h1>Tags</h1>
+
+{% if tag_form %}
+  <div class="card" style="margin-bottom:1.5rem">
+    <h2>Create Tag</h2>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group" style="max-width:320px">
+        {{ tag_form.name.label_tag }}
+        {{ tag_form.name }}
+        {% if tag_form.name.errors %}
+          <ul style="color:#dc3545;font-size:0.875rem;list-style:none;margin-top:0.25rem">
+            {% for error in tag_form.name.errors %}<li>{{ error }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+      <button type="submit" class="btn btn-primary">Add Tag</button>
+    </form>
+  </div>
+{% endif %}
+
+{% if tags %}
+  <div style="display:flex;flex-wrap:wrap;gap:0.75rem">
+    {% for tag in tags %}
+      <a href="{% url 'recipes:list' %}?tag={{ tag.slug }}"
+         style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;
+                background:#e9ecef;border-radius:20px;font-size:0.95rem;text-decoration:none;color:#212529">
+        {{ tag.name }}
+        <span style="background:#adb5bd;color:#fff;border-radius:10px;padding:0.1em 0.5em;font-size:0.78rem">
+          {{ tag.recipe_count }}
+        </span>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <p style="color:#6c757d">No tags yet.</p>
+{% endif %}
+{% endblock %}

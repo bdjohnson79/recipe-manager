@@ -1,14 +1,14 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView, DeleteView, DetailView, ListView, UpdateView,
 )
 
-from .forms import RecipeForm, RecipeIngredientFormSet, RecipeStepFormSet
-from .models import Recipe
+from .forms import RecipeForm, RecipeIngredientFormSet, RecipeStepFormSet, TagForm
+from .models import Recipe, Tag
 
 
 class ApprovedUserRequiredMixin(LoginRequiredMixin):
@@ -145,6 +145,42 @@ class RecipeUpdateView(ApprovedUserRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return self.object.get_absolute_url()
+
+
+class TagListView(ListView):
+    model = Tag
+    template_name = 'recipes/tag_list.html'
+    context_object_name = 'tags'
+
+    def get_queryset(self):
+        return Tag.objects.annotate(recipe_count=Count('recipes')).order_by('name')
+
+    def _user_can_create(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return False
+        if user.is_staff:
+            return True
+        return getattr(getattr(user, 'profile', None), 'is_approved', False)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        if self._user_can_create():
+            ctx['tag_form'] = ctx.get('tag_form', TagForm())
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        if not self._user_can_create():
+            messages.error(request, "You don't have permission to create tags.")
+            return redirect('recipes:tags')
+        form = TagForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Tag \"{form.cleaned_data['name']}\" created.")
+            return redirect('recipes:tags')
+        self.object_list = self.get_queryset()
+        ctx = self.get_context_data(tag_form=form)
+        return self.render_to_response(ctx)
 
 
 class RecipeDeleteView(ApprovedUserRequiredMixin, DeleteView):

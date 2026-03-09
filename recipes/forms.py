@@ -3,7 +3,7 @@ import re
 from django import forms
 from django.forms import inlineformset_factory
 
-from .models import Ingredient, Recipe, RecipeIngredient, RecipeStep
+from .models import Ingredient, Recipe, RecipeIngredient, RecipeStep, Tag
 
 
 # ── Natural-language duration helpers ────────────────────────────────────────
@@ -107,6 +107,12 @@ class RecipeForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 4}),
             'tags': forms.CheckboxSelectMultiple(),
         }
+
+
+class TagForm(forms.ModelForm):
+    class Meta:
+        model = Tag
+        fields = ['name']
 
 
 class RecipeIngredientForm(forms.ModelForm):
