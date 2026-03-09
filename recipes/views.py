@@ -57,7 +57,6 @@ class RecipeListView(ListView):
         qs = Recipe.objects.prefetch_related('tags').distinct().order_by('title')
         q = self.request.GET.get('q', '').strip()
         tag = self.request.GET.get('tag', '').strip()
-        difficulty = self.request.GET.get('difficulty', '').strip()
 
         if q:
             qs = qs.filter(
@@ -67,16 +66,12 @@ class RecipeListView(ListView):
             ).distinct()
         if tag:
             qs = qs.filter(tags__slug=tag)
-        if difficulty:
-            qs = qs.filter(difficulty=difficulty)
         return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['q'] = self.request.GET.get('q', '')
         ctx['tag'] = self.request.GET.get('tag', '')
-        ctx['difficulty'] = self.request.GET.get('difficulty', '')
-        ctx['difficulty_choices'] = Recipe.DIFFICULTY_CHOICES
         ctx['all_tags'] = Tag.objects.order_by('name')
         ctx['user_can_edit'] = _user_can_edit(self.request.user)
         ctx['per_page'] = self.get_paginate_by(None)

@@ -36,7 +36,6 @@
   .recipe-table tr:hover td { background: #f0f4ff; }
   .recipe-table .col-check { width: 2rem; text-align: center; }
   .recipe-table .col-title { font-weight: 500; }
-  .recipe-table .col-diff { width: 90px; }
   .recipe-table .col-time { width: 80px; color: #6c757d; font-size: 0.875rem; white-space: nowrap; }
   .recipe-table .col-tags { }
   .recipe-table .col-tags .tag { margin-bottom: 0.15rem; display: inline-block; }
@@ -74,20 +73,13 @@
 
 <form method="get" class="search-bar">
   <input type="text" name="q" value="{{ q }}" placeholder="Search recipes...">
-  <select name="difficulty">
-    <option value="">All difficulties</option>
-    {% for value, label in difficulty_choices %}
-      <option value="{{ value }}" {% if difficulty == value %}selected{% endif %}>{{ label }}</option>
-    {% endfor %}
-  </select>
-  <input type="text" name="tag" value="{{ tag }}" placeholder="Tag slug">
   <select name="per_page" onchange="this.form.submit()" title="Results per page">
     {% for n in per_page_options %}
       <option value="{{ n }}" {% if per_page == n %}selected{% endif %}>{{ n }} per page</option>
     {% endfor %}
   </select>
   <button type="submit" class="btn btn-primary">Search</button>
-  {% if q or tag or difficulty %}
+  {% if q or tag %}
     <a href="{% url 'recipes:list' %}" class="btn btn-secondary">Clear</a>
   {% endif %}
 </form>
@@ -102,8 +94,7 @@
         {% endif %}
         <h2><a href="{{ recipe.get_absolute_url }}">{{ recipe.title }}</a></h2>
         <div class="meta">
-          <span class="badge badge-{{ recipe.difficulty }}">{{ recipe.get_difficulty_display }}</span>
-          &nbsp;{{ recipe.total_time }} min total
+          {{ recipe.total_time }} min total
           &nbsp;&bull;&nbsp;{{ recipe.servings }} serving{{ recipe.servings|pluralize }}
         </div>
         {% if recipe.tags.all %}
@@ -131,7 +122,6 @@
               <input type="checkbox" id="select-all" title="Select all">
             </th>
             <th>Recipe</th>
-            <th class="col-diff">Difficulty</th>
             <th class="col-time">Time</th>
             <th class="col-tags">Tags</th>
           </tr>
@@ -144,9 +134,6 @@
             </td>
             <td class="col-title">
               <a href="{{ recipe.get_absolute_url }}">{{ recipe.title }}</a>
-            </td>
-            <td class="col-diff">
-              <span class="badge badge-{{ recipe.difficulty }}">{{ recipe.get_difficulty_display }}</span>
             </td>
             <td class="col-time">{{ recipe.total_time }}m</td>
             <td class="col-tags">
@@ -180,11 +167,11 @@
   {% if is_paginated %}
     <div class="pagination">
       {% if page_obj.has_previous %}
-        <span class="page-item"><a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if tag %}&tag={{ tag }}{% endif %}{% if difficulty %}&difficulty={{ difficulty }}{% endif %}&per_page={{ per_page }}">&laquo; Prev</a></span>
+        <span class="page-item"><a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if tag %}&tag={{ tag }}{% endif %}&per_page={{ per_page }}">&laquo; Prev</a></span>
       {% endif %}
       <span class="page-item active"><span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></span>
       {% if page_obj.has_next %}
-        <span class="page-item"><a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if tag %}&tag={{ tag }}{% endif %}{% if difficulty %}&difficulty={{ difficulty }}{% endif %}&per_page={{ per_page }}">Next &raquo;</a></span>
+        <span class="page-item"><a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if tag %}&tag={{ tag }}{% endif %}&per_page={{ per_page }}">Next &raquo;</a></span>
       {% endif %}
     </div>
   {% endif %}
