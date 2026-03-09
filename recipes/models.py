@@ -92,7 +92,7 @@ class Recipe(models.Model):
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe_ingredients')
     ingredient = models.ForeignKey(Ingredient, on_delete=models.PROTECT, related_name='recipe_ingredients')
-    quantity = models.CharField(max_length=50)
+    quantity = models.CharField(max_length=50, blank=True)
     unit = models.CharField(max_length=50, blank=True)
     notes = models.CharField(max_length=200, blank=True)
     order = models.PositiveSmallIntegerField(default=0)
