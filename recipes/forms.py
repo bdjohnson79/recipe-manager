@@ -145,7 +145,7 @@ RecipeIngredientFormSet = inlineformset_factory(
     Recipe,
     RecipeIngredient,
     form=RecipeIngredientForm,
-    extra=1,
+    extra=0,
     can_delete=True,
 )
 
@@ -153,6 +153,6 @@ RecipeStepFormSet = inlineformset_factory(
     Recipe,
     RecipeStep,
     form=RecipeStepForm,
-    extra=1,
+    extra=0,
     can_delete=True,
 )
